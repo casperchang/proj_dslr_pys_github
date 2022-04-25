@@ -1,6 +1,7 @@
 import cv2
 import os
 import sys
+import shutil
 from shutil import copyfile
 import tkinter as tk
 import exifread
@@ -9,32 +10,32 @@ from os import listdir
 from os.path import isfile, join
 
 def get_photo_original_datetime(path_image, filename):
-    file_path = path_image
-    b = open(file_path, 'rb')
-    tags = exifread.process_file(b)
-    # print(tags.keys)
-    for tag in tags.keys():
-        if 'DateTimeOriginal' in tag:
-            # print(str(tags[tag]))
-            try:
-                str_datetime = str(tags[tag])
-            except:
-                print(Exception)
-            finally:
-                # print('str_datetime: ', str_datetime.split(' ')[0])
-                # print('len: ', len(str_datetime))
-                if len(str_datetime.split(' ')[0].split(':')) == 3:
-                    # print(str_datetime)
-                    y = str_datetime.split(' ')[0].split(':')[0]
-                    m = str_datetime.split(' ')[0].split(':')[1]
-                    d = str_datetime.split(' ')[0].split(':')[2]
-                    create_date = '%s%2s%s' % (y, m, d)
-                    # print(create_date)
-                    # break
-                    return y, create_date
-                else:
-                    print('datatime format error len: %d' % len(str_datetime.split(' ')[0].split(':')))
-    return ('', '') # empty stands for something wrong
+	file_path = path_image
+	b = open(file_path, 'rb')
+	tags = exifread.process_file(b)
+	# print(tags.keys)
+	for tag in tags.keys():
+		if 'DateTimeOriginal' in tag:
+			# print(str(tags[tag]))
+			try:
+				str_datetime = str(tags[tag])
+			except:
+				print(Exception)
+			finally:
+				# print('str_datetime: ', str_datetime.split(' ')[0])
+				# print('len: ', len(str_datetime))
+				if len(str_datetime.split(' ')[0].split(':')) == 3:
+					# print(str_datetime)
+					y = str_datetime.split(' ')[0].split(':')[0]
+					m = str_datetime.split(' ')[0].split(':')[1]
+					d = str_datetime.split(' ')[0].split(':')[2]
+					create_date = '%s%2s%s' % (y, m, d)
+					# print(create_date)
+					# break
+					return y, create_date
+				else:
+					print('datatime format error len: %d' % len(str_datetime.split(' ')[0].split(':')))
+	return ('', '') # empty stands for something wrong
 
 def show_image_by_index(root, files, index):
 	# print('index %d, len(files): %d' % (index, len(files)))
@@ -93,7 +94,7 @@ if __name__ == '__main__':
 			cv2.destroyAllWindows()
 			index += 1
 			# if index >= len(files):
-			# 	index = len(files) - 1 # to the last file
+			#   index = len(files) - 1 # to the last file
 			index = min(index, len(files)-1)
 		elif c == 0: # key.up
 			cv2.destroyAllWindows()
@@ -112,13 +113,40 @@ if __name__ == '__main__':
 					files.sort()
 					index = min(index, len(files) - 1)
 		elif c == ord('s'):
+
+			# check if folder existed, otherwise mkdir it. 
+			if not os.path.isdir(os.path.join(os.getcwd(), 'selected')):
+				try:
+					os.mkdir(os.path.join(os.getcwd(), 'selected'))
+					print(f"folder selected has been created.")
+				except Exception as e:
+					print(e)
+
 			# cp file into selected folder
 			f = files[index]
 			src = os.path.join(root, f)
 			dst = os.path.join('./selected', f)
-			copyfile(src, dst)
-			print('copyfile from %s to %s' % (src, dst))
+			# copyfile(src, dst)
+			# print('copyfile from %s to %s' % (src, dst))
+
+			# move file instead of copy
+			shutil.move(src, dst)
+			# reload file list after moving picture
+			files = [f for f in listdir(path_stock) if isfile(join(path_stock, f))]
+			files.sort()
+			index = min(index, len(files) - 1)
+
 		elif c == ord('p'):
+
+			# check if folder existed, otherwise mkdir it. 
+			if not os.path.isdir(os.path.join(os.getcwd(), 'profolio')):
+				try:
+					os.mkdir(os.path.join(os.getcwd(), 'profolio'))
+					print(f"folder selected has been created.")
+				except Exception as e:
+					print(e)
+
+
 			# cp file into profolio folder (profolio means enough to sharing or development :) )
 			f = files[index]
 			src = os.path.join(root, f)
@@ -133,8 +161,6 @@ if __name__ == '__main__':
 
 			copyfile(src, dst)
 			print('copyfile from %s to %s' % (src, dst))
-		elif c == ord('d'): # delete (move to recycle bin)
-			pass
 		else:
 			print ('you press %s, do nothing' % chr(c))
 
